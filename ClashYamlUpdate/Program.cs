@@ -12,14 +12,16 @@ namespace ClashYamlUpdate
     {
         static string AppName = Path.GetFileName(AppDomain.CurrentDomain.FriendlyName);
         static string AppPath = Path.GetDirectoryName(AppDomain.CurrentDomain.BaseDirectory);
+        static string WorkPath = Directory.GetCurrentDirectory();
+
         static bool simple_stdin = true;
 
         static void Main(string[] args)
         {
-            var show_help = false;
-            var template_yaml = Path.Combine(AppPath, "default.yaml");
-            var source_yaml = Path.Combine(AppPath, "source.yaml");
-            var target_yaml = Path.Combine(AppPath, "target.yaml");
+            var show_help = false;            
+            var template_yaml = Path.Combine(WorkPath, "default.yaml");
+            var source_yaml = Path.Combine(WorkPath, "source.yaml");
+            var target_yaml = Path.Combine(WorkPath, "target.yaml");
 
             var opts = new OptionSet()
             {
@@ -49,20 +51,23 @@ namespace ClashYamlUpdate
 
             if (File.Exists(template_yaml) && File.Exists(source_yaml))
             {
-                Console.WriteLine($"{"Source File".PadRight(16)}:{source_yaml}");
-                Console.WriteLine($"{"Target File".PadRight(16)}:{target_yaml}");
-                Console.WriteLine($"{"Template File".PadRight(16)}:{template_yaml}");
+                Console.WriteLine("=".PadRight(72, '='));
+                Console.WriteLine($"{"Source File".PadRight(13)} : {source_yaml}");
+                Console.WriteLine($"{"Target File".PadRight(13)} : {target_yaml}");
+                Console.WriteLine($"{"Template File".PadRight(13)} : {template_yaml}");
 
                 var clash_template = Clash.ConfigYaml.FromFile(template_yaml);
                 var clash_source = Clash.ConfigYaml.FromFile(source_yaml);
 
                 if (clash_template is Clash.ConfigYaml && clash_source is Clash.ConfigYaml)
                 {
+                    Console.WriteLine("-".PadRight(72, '-'));
                     Console.WriteLine($"Merge \"{Path.GetFileName(template_yaml)}\" And \"{Path.GetFileName(source_yaml)}\" To \"{Path.GetFileName(target_yaml)}\" ...");
 
                     var clash_target = clash_template.MergeTo(clash_source);
                     clash_target.ToFile(target_yaml);
                 }
+                Console.WriteLine("=".PadRight(72, '='));
             }
         }
 
