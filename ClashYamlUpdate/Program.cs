@@ -40,24 +40,26 @@ namespace ClashYamlUpdate
             if (Console.IsInputRedirected)
             {
                 var flist = GetStdIn().GetAwaiter().GetResult();
-                foreach (var f in flist)
-                {
-                    Console.WriteLine($"FileName = {f}");
-                }
                 if (flist.Count() > 0) source_yaml = flist.Last();
+                //foreach (var f in flist)
+                //{
+                //    Console.WriteLine($"FileName = {f}");
+                //}
             }
-
-            Console.WriteLine(source_yaml);
-            Console.WriteLine(target_yaml);
-            Console.WriteLine(template_yaml);
 
             if (File.Exists(template_yaml) && File.Exists(source_yaml))
             {
+                Console.WriteLine($"{"Source File".PadRight(16)}:{source_yaml}");
+                Console.WriteLine($"{"Target File".PadRight(16)}:{target_yaml}");
+                Console.WriteLine($"{"Template File".PadRight(16)}:{template_yaml}");
+
                 var clash_template = Clash.ConfigYaml.FromFile(template_yaml);
                 var clash_source = Clash.ConfigYaml.FromFile(source_yaml);
 
                 if (clash_template is Clash.ConfigYaml && clash_source is Clash.ConfigYaml)
                 {
+                    Console.WriteLine($"Merge \"{Path.GetFileName(template_yaml)}\" And \"{Path.GetFileName(source_yaml)}\" To \"{Path.GetFileName(target_yaml)}\" ...");
+
                     var clash_target = clash_template.MergeTo(clash_source);
                     clash_target.ToFile(target_yaml);
                 }
