@@ -117,6 +117,43 @@ namespace Clash
         {
             var result = dst;
 
+            #region Merge Proxy Providers
+            if (this.ProxyProviders != null)
+            {
+                if (result.ProxyProviders == null)
+                {
+                    result.ProxyProviders = this.ProxyProviders;
+                }
+                else
+                {
+                    foreach (var provider in this.ProxyProviders)
+                    {
+                        if (result.ProxyProviders.ContainsKey(provider.Key)) continue;
+                        result.ProxyProviders.Add(provider.Key, provider.Value);
+                    }
+                }
+            }
+            #endregion
+
+            #region Merge Rule Providers
+            if (this.RuleProviders != null)
+            {
+                if (result.RuleProviders == null)
+                {
+                    result.RuleProviders = this.RuleProviders;
+                }
+                else
+                {
+                    foreach (var provider in this.RuleProviders)
+                    {
+                        if (result.RuleProviders.ContainsKey(provider.Key)) continue;
+                        result.RuleProviders.Add(provider.Key, provider.Value);
+                    }
+                }
+            }
+            #endregion
+
+            #region Merge Proxies
             var proxy_list = dst.Proxies.ToList();
             var proxy_names = proxy_list.Select(p => p.Name);
             var proxy_new = new List<string>();
@@ -128,30 +165,35 @@ namespace Clash
                 proxy_new.Add(proxy.Name);
             }
             result.Proxies = proxy_list.ToArray();
+            #endregion
 
+            #region Merge Proxy Groups
             var group_list = dst.ProxyGroups.ToList();
             var group_names = group_list.Select(g => g.Name);
-            var group_new = new List<string>();
+            var group_new = new List<ProxyGroup>();
             foreach (var group in this.ProxyGroups)
             {
                 if (group_names.Contains(group.Name)) continue;
                 //proxy_list.Append()
                 group_list.Insert(0, group);
-                group_new.Add(group.Name);
+                group_new.Add(group);
             }
+            var group_new_names = group_new.Select(g => g.Name);
             foreach (var group in group_list)
             {
-                if (group_new.Contains(group.Name)) continue;
                 if (!group.Type.Equals("select", StringComparison.CurrentCultureIgnoreCase)) continue;
+                if (group_new_names.Contains(group.Name)) continue;
                 var group_proxy = group.Proxies.ToList();
-                foreach (var proxy in group_new)
+                foreach (var gn in group_new)
                 {
-                    if (group.Proxies.Contains(proxy)) continue;
-                    group_proxy.Insert(0, proxy);
+                    if (group.Proxies.Contains(gn.Name)) continue;
+                    if (gn.Proxies.Contains(group.Name)) continue;
+                    group_proxy.Insert(0, gn.Name);
                 }
                 group.Proxies = group_proxy.ToArray();
             }
             result.ProxyGroups = group_list.ToArray();
+            #endregion
 
             return (result);
         }
@@ -290,17 +332,17 @@ namespace Clash
         [YamlMember(Alias = "dns", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
         public Dns Dns { get; set; }
 
+        [YamlMember(Alias = "proxy-providers", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
+        public Dictionary<string, Provider> ProxyProviders { get; set; }
+
+        [YamlMember(Alias = "rule-providers", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
+        public Dictionary<string, Provider> RuleProviders { get; set; }
+
         [YamlMember(Alias = "proxies", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
         public Proxy[] Proxies { get; set; }
 
-        [YamlMember(Alias = "proxy-providers", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
-        public Provider[] ProxyProviders { get; set; }
-
         [YamlMember(Alias = "proxy-groups", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
         public ProxyGroup[] ProxyGroups { get; set; }
-
-        [YamlMember(Alias = "rule-providers", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
-        public Provider[] RuleProviders { get; set; }
 
         [YamlMember(Alias = "rules", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
         public string[] Rules { get; set; }
@@ -642,9 +684,6 @@ namespace Clash
         [YamlMember(Alias = "type")]
         public string Type { get; set; }
 
-        [YamlMember(Alias = "proxies", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
-        public string[] Proxies { get; set; }
-
         [YamlMember(Alias = "url", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
         public string Url { get; set; }
 
@@ -653,6 +692,9 @@ namespace Clash
 
         [YamlMember(Alias = "use", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
         public string[] Use { get; set; }
+
+        [YamlMember(Alias = "proxies", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
+        public string[] Proxies { get; set; }
     }
 
     public partial class Provider
@@ -660,8 +702,8 @@ namespace Clash
         [YamlMember(Alias = "type")]
         public string Type { get; set; }
 
-        [YamlMember(Alias = "url")]
-        public Uri Url { get; set; }
+        [YamlMember(Alias = "url", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
+        public string Url { get; set; }
 
         [YamlMember(Alias = "path")]
         public string Path { get; set; }
@@ -670,7 +712,7 @@ namespace Clash
         public string Behavior { get; set; }
 
         [YamlMember(Alias = "interval", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
-        public long Interval { get; set; }
+        public long? Interval { get; set; }
 
         [YamlMember(Alias = "health-check", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
         public HealthCheck HealthCheck { get; set; }
@@ -678,17 +720,17 @@ namespace Clash
 
     public partial class HealthCheck
     {
-        [YamlMember(Alias = "enable")]
+        [YamlMember(Alias = "enable", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
         public bool Enable { get; set; }
 
-        [YamlMember(Alias = "interval")]
+        [YamlMember(Alias = "interval", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
         public long Interval { get; set; }
 
-        [YamlMember(Alias = "lazy")]
+        [YamlMember(Alias = "lazy", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
         public bool Lazy { get; set; }
 
-        [YamlMember(Alias = "url")]
-        public Uri Url { get; set; }
+        [YamlMember(Alias = "url", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
+        public string Url { get; set; }
     }
 
 }
