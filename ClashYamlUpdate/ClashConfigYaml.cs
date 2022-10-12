@@ -3,67 +3,97 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using YamlDotNet.Serialization;
 
 namespace Clash
 {
-    public partial class ConfigYaml
+    public partial class ClashConfigYaml
     {
-        public static ConfigYaml FromFile(string file)
+        private static string[] LINEBREAK = new string[] { Environment.NewLine, "\n\r", "\r\n", "\n", "\r" };
+
+        public static ClashConfigYaml FromFile(string file)
         {
-            ConfigYaml result = null;
+            ClashConfigYaml result = null;
+            if (File.Exists(file))
+            {
+                try
+                {
+                    result = FromLines(File.ReadAllLines(file, Encoding.UTF8).ToList());
+                }
+                catch (Exception ex) { Console.Out.WriteLine(ex.Message); }
+            }
+            return (result);
+        }
+
+        public static async Task<ClashConfigYaml> FromFileAsync(string file)
+        {
+            ClashConfigYaml result = null;
             if (File.Exists(file))
             {
                 try
                 {
                     var yaml = new Deserializer();
-                    var contents = File.ReadAllLines(file, Encoding.UTF8).ToList();
-                    if (!contents[0].StartsWith("#")) contents.Insert(0, "# YAML Starting...");
-                    result = yaml.Deserialize<ConfigYaml>(string.Join(Environment.NewLine, contents));
+                    using (var fs = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read))
+                    {
+                        result = await FromStreamAsync(fs);
+                    }
                 }
                 catch (Exception ex) { Console.Out.WriteLine(ex.Message); }
             }
             return (result);
         }
 
-        public static ConfigYaml FromStream(Stream stream)
+        public static ClashConfigYaml FromStream(Stream stream)
         {
-            ConfigYaml result = null;
+            ClashConfigYaml result = null;
             if (stream is Stream && stream.CanRead && stream.Length > 0)
             {
                 try
                 {
                     stream.Seek(0, SeekOrigin.Begin);
-                    var yaml = new Deserializer();
                     var bytes = new byte[stream.Length];
                     var count = stream.Read(bytes, 0, (int)stream.Length);
-                    var contents = Encoding.UTF8.GetString(bytes);
-                    if (!contents[0].Equals('#')) contents.Insert(0, $"# YAML Starting...{Environment.NewLine}");
-                    result = yaml.Deserialize<ConfigYaml>(string.Join(Environment.NewLine, contents));
+                    var contents = Encoding.UTF8.GetString(bytes).Split(LINEBREAK, StringSplitOptions.RemoveEmptyEntries).ToList();
+                    result = FromLines(contents);
                 }
                 catch (Exception ex) { Console.Out.WriteLine(ex.Message); }
             }
             return (result);
         }
 
-        public static async Task<ConfigYaml> FromStreamAsync(Stream stream)
+        public static async Task<ClashConfigYaml> FromStreamAsync(Stream stream)
         {
-            ConfigYaml result = null;
+            ClashConfigYaml result = null;
             if (stream is Stream && stream.CanRead && stream.Length > 0)
             {
                 try
                 {
                     stream.Seek(0, SeekOrigin.Begin);
-                    var yaml = new Deserializer();
                     var bytes = new byte[stream.Length];
                     var count = await stream.ReadAsync(bytes, 0, (int)stream.Length);
-                    var contents = Encoding.UTF8.GetString(bytes);
-                    if (!contents[0].Equals('#')) contents.Insert(0, $"# YAML Starting...{Environment.NewLine}");
-                    result = yaml.Deserialize<ConfigYaml>(string.Join(Environment.NewLine, contents));
+                    var contents = Encoding.UTF8.GetString(bytes).Split(LINEBREAK, StringSplitOptions.RemoveEmptyEntries).ToList();
+                    result = FromLines(contents);
                 }
                 catch (Exception ex) { Console.Out.WriteLine(ex.Message); }
             }
+            return (result);
+        }
+
+        public static ClashConfigYaml FromLines(IList<string> lines)
+        {
+            ClashConfigYaml result = null;
+            try
+            {
+                if (lines is IList<string> && lines.Count > 0)
+                {
+                    var yaml = new Deserializer();
+                    if (!lines[0].StartsWith("#")) lines.Insert(0, $"# YAML Starting...{Environment.NewLine}");
+                    result = yaml.Deserialize<ClashConfigYaml>(string.Join(Environment.NewLine, lines));
+                }
+            }
+            catch (Exception ex) { Console.Out.WriteLine(ex.Message); }
             return (result);
         }
 
@@ -113,7 +143,7 @@ namespace Clash
             catch (Exception ex) { Console.Out.WriteLine(ex.Message); }
         }
 
-        public ConfigYaml MergeTo(ConfigYaml dst)
+        public ClashConfigYaml MergeTo(ClashConfigYaml dst)
         {
             var result = dst;
 
@@ -128,8 +158,12 @@ namespace Clash
                 {
                     foreach (var provider in this.ProxyProviders)
                     {
-                        if (result.ProxyProviders.ContainsKey(provider.Key)) continue;
-                        result.ProxyProviders.Add(provider.Key, provider.Value);
+                        try
+                        {
+                            if (result.ProxyProviders.ContainsKey(provider.Key)) continue;
+                            result.ProxyProviders.Add(provider.Key, provider.Value);
+                        }
+                        catch (Exception ex) { Console.WriteLine(ex.Message); }
                     }
                 }
             }
@@ -146,8 +180,12 @@ namespace Clash
                 {
                     foreach (var provider in this.RuleProviders)
                     {
-                        if (result.RuleProviders.ContainsKey(provider.Key)) continue;
-                        result.RuleProviders.Add(provider.Key, provider.Value);
+                        try
+                        {
+                            if (result.RuleProviders.ContainsKey(provider.Key)) continue;
+                            result.RuleProviders.Add(provider.Key, provider.Value);
+                        }
+                        catch (Exception ex) { Console.WriteLine(ex.Message); }
                     }
                 }
             }
@@ -159,10 +197,14 @@ namespace Clash
             var proxy_new = new List<string>();
             foreach (var proxy in this.Proxies)
             {
-                if (proxy_names.Contains(proxy.Name)) continue;
-                //proxy_list.Append()
-                proxy_list.Add(proxy);
-                proxy_new.Add(proxy.Name);
+                try
+                {
+                    if (proxy_names.Contains(proxy.Name)) continue;
+                    //proxy_list.Append()
+                    proxy_list.Add(proxy);
+                    proxy_new.Add(proxy.Name);
+                }
+                catch (Exception ex) { Console.WriteLine(ex.Message); }
             }
             result.Proxies = proxy_list.ToArray();
             #endregion
@@ -171,30 +213,145 @@ namespace Clash
             var group_list = dst.ProxyGroups.ToList();
             var group_names = group_list.Select(g => g.Name);
             var group_new = new List<ProxyGroup>();
-            foreach (var group in this.ProxyGroups)
+            foreach (var group in ProxyGroups)
             {
-                if (group_names.Contains(group.Name)) continue;
-                //proxy_list.Append()
-                group_list.Insert(0, group);
-                group_new.Add(group);
+                try
+                {
+                    if (group_names.Contains(group.Name)) continue;
+                    //proxy_list.Append()
+                    group_list.Insert(0, group);
+                    group_new.Add(group);
+                }
+                catch (Exception ex) { Console.WriteLine(ex.Message); }
             }
             var group_new_names = group_new.Select(g => g.Name);
             foreach (var group in group_list)
             {
-                if (!group.Type.Equals("select", StringComparison.CurrentCultureIgnoreCase)) continue;
-                if (group_new_names.Contains(group.Name)) continue;
-                var group_proxy = group.Proxies.ToList();
-                foreach (var gn in group_new)
+                try
                 {
-                    if (group.Proxies.Contains(gn.Name)) continue;
-                    if (gn.Proxies.Contains(group.Name)) continue;
-                    group_proxy.Insert(0, gn.Name);
+                    if (!group.Type.Equals("select", StringComparison.CurrentCultureIgnoreCase)) continue;
+                    if (group_new_names.Contains(group.Name)) continue;
+                    var group_proxy = group.Proxies == null ? new List<string>() : group.Proxies.ToList();
+                    foreach (var gn in group_new)
+                    {
+                        try
+                        {
+                            if (group.Proxies != null && group.Proxies.Contains(gn.Name)) continue;
+                            if (gn.Proxies != null && gn.Proxies.Contains(group.Name)) continue;
+                            group_proxy.Insert(0, gn.Name);
+                        }
+                        catch (Exception ex) { Console.WriteLine(ex.Message); }
+                    }
+                    group.Proxies = group_proxy.Count > 0 ? group_proxy.ToArray() : null;
                 }
-                group.Proxies = group_proxy.ToArray();
+                catch (Exception ex) { Console.WriteLine(ex.Message); }
             }
             result.ProxyGroups = group_list.ToArray();
             #endregion
 
+            #region Merge Rules
+            var rules = dst.Rules.Select(r => string.Join(", ", r.Split(',').Select(a => a.Trim()))).ToList();
+            var groups = dst.ProxyGroups.Select(g => g.Name).ToList();
+            var insert = new List<string>();
+            foreach (var rule in this.Rules.Select(r => string.Join(", ", r.Split(',').Select(a => a.Trim()))))
+            {
+                try
+                {
+                    if (string.IsNullOrEmpty(rule)) continue;
+                    if (rules.Contains(rule)) continue;
+                    
+                    var group = rule.Split(',').Skip(2).First().Trim();
+                    if (groups.Contains(group)) insert.Add(rule); 
+                }
+                catch (Exception ex) { Console.WriteLine(ex.Message); }
+            }
+            rules.InsertRange(0, insert);
+            dst.Rules = rules.ToArray();
+            #endregion
+
+            return (result);
+        }
+
+        public ClashConfigYaml CleanUp(IEnumerable<string> RemoveList, IEnumerable<KeyValuePair<string, string>> ReplaceList)
+        {
+            var result = this;
+            try
+            {
+                if (RemoveList is IEnumerable<string>)
+                {
+                    var proxy_list = Proxies.ToList();
+                    foreach (var proxy in Proxies.ToList())
+                    {
+                        foreach (var remove in RemoveList)
+                        {
+                            if (Regex.IsMatch(proxy.Name, remove, RegexOptions.IgnoreCase))
+                            {
+                                proxy_list.Remove(proxy);
+                            }
+                        }
+                    }
+                    Proxies = proxy_list.ToArray();
+
+                    var group_list = ProxyGroups.ToList();
+                    foreach (var group in ProxyGroups.ToList())
+                    {
+                        if (group.Proxies is IEnumerable<string>)
+                        {
+                            var proxies = group.Proxies.ToList();
+                            foreach (var proxy in group.Proxies.ToList())
+                            {
+                                foreach (var remove in RemoveList)
+                                {
+                                    if (Regex.IsMatch(proxy, remove, RegexOptions.IgnoreCase))
+                                    {
+                                        proxies.Remove(proxy);
+                                    }
+                                }
+                            }
+                            group.Proxies = proxies.ToArray();
+                        }
+                    }
+                    ProxyGroups = group_list.ToArray();
+                }
+
+                if (ReplaceList is IDictionary<string, string>)
+                {
+                    var proxy_list = Proxies.ToList();
+                    foreach (var proxy in Proxies.ToList())
+                    {
+                        foreach (var replace in ReplaceList)
+                        {
+                            if (Regex.IsMatch(proxy.Name, replace.Key, RegexOptions.IgnoreCase))
+                            {
+                                proxy.Name = Regex.Replace(proxy.Name, replace.Key, replace.Value, RegexOptions.IgnoreCase);
+                            }
+                        }
+                    }
+                    Proxies = proxy_list.ToArray();
+
+                    var group_list = ProxyGroups.ToList();
+                    foreach (var group in ProxyGroups.ToList())
+                    {
+                        if (group.Proxies is IEnumerable<string>)
+                        {
+                            var proxies = group.Proxies.ToList();
+                            for (int i = 0; i < proxies.Count; i++)
+                            {
+                                var proxy = group.Proxies[i];
+                                foreach (var replace in ReplaceList)
+                                {
+                                    if (Regex.IsMatch(proxy, replace.Key, RegexOptions.IgnoreCase))
+                                    {
+                                        group.Proxies[i] = Regex.Replace(proxy, replace.Key, replace.Value, RegexOptions.IgnoreCase);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    ProxyGroups = group_list.ToArray();
+                }
+            }
+            catch { }
             return (result);
         }
 
@@ -516,35 +673,35 @@ namespace Clash
         [YamlMember(Alias = "type")]
         public string Type { get; set; }
 
-        [YamlMember(Alias = "cipher", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
-        public string Cipher { get; set; }
-
-        [YamlMember(Alias = "tls", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
-        public bool? Tls { get; set; }
-
         [YamlMember(Alias = "uuid", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
-        public Guid? Uuid { get; set; }
+        public Guid? UUID { get; set; }
 
         [YamlMember(Alias = "alterId", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
-        public long? AlterId { get; set; }
+        public long? AlterID { get; set; }
 
-        [YamlMember(Alias = "skip-cert-verify", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
-        public bool? SkipCertVerify { get; set; }
-
-        [YamlMember(Alias = "udp", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
-        public bool? Udp { get; set; }
-
-        [YamlMember(Alias = "network", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
-        public string Network { get; set; }
-
-        [YamlMember(Alias = "servername", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
-        public string ServerName { get; set; }
+        [YamlMember(Alias = "cipher", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
+        public string Cipher { get; set; }
 
         [YamlMember(Alias = "username", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
         public string Username { get; set; }
 
         [YamlMember(Alias = "password", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
         public string Password { get; set; }
+
+        [YamlMember(Alias = "udp", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
+        public bool? UDP { get; set; }
+
+        [YamlMember(Alias = "tls", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
+        public bool? TLS { get; set; }
+
+        [YamlMember(Alias = "skip-cert-verify", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
+        public bool? SkipCertVerify { get; set; }
+
+        [YamlMember(Alias = "servername", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
+        public string ServerName { get; set; }
+
+        [YamlMember(Alias = "network", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
+        public string Network { get; set; }
 
         [YamlMember(Alias = "h2-opts", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
         public H2Opts H2Opts { get; set; }
@@ -557,9 +714,6 @@ namespace Clash
 
         [YamlMember(Alias = "ws-headers", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
         public WsHeaders WsHeaders { get; set; }
-
-        [YamlMember(Alias = "version", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
-        public long Version { get; set; }
 
         [YamlMember(Alias = "psk", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
         public string Psk { get; set; }
@@ -587,6 +741,17 @@ namespace Clash
 
         [YamlMember(Alias = "grpc-opts", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
         public GrpcOpts GrpcOpts { get; set; }
+
+        [YamlMember(Alias = "version", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
+        public long? Version { get; set; }
+    }
+
+    public partial class Rule
+    {
+        public string type { get; set; }
+        public string address { get; set; }
+        public string group { get; set; }
+        public string option { get; set; }
     }
 
     public partial class ObfsOpts

@@ -54,7 +54,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ClashConfig.cs" />
+    <Compile Include="AppConfigYaml.cs" />
+    <Compile Include="ClashConfigYaml.cs" />
+    <Compile Include="ConfigYaml.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
