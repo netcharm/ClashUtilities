@@ -709,6 +709,9 @@ namespace Clash
         [YamlMember(Alias = "http-opts", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
         public HttpOpts HttpOpts { get; set; }
 
+        [YamlMember(Alias = "ws-opts", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
+        public WsOpts WsOpts { get; set; }
+
         [YamlMember(Alias = "ws-path", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
         public string WsPath { get; set; }
 
