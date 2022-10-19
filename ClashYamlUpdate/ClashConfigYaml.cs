@@ -262,6 +262,8 @@ namespace Clash
                     
                     var group = rule.Split(',').Skip(2).First().Trim();
                     if (groups.Contains(group)) insert.Add(rule); 
+                    else if (group.Equals("DIRECT", StringComparison.CurrentCultureIgnoreCase)) insert.Add(rule);
+                    else if (group.Equals("REJECT", StringComparison.CurrentCultureIgnoreCase)) insert.Add(rule);
                 }
                 catch (Exception ex) { Console.WriteLine(ex.Message); }
             }
@@ -272,28 +274,47 @@ namespace Clash
             return (result);
         }
 
-        public ClashConfigYaml CleanUp(IEnumerable<string> RemoveList, IEnumerable<KeyValuePair<string, string>> ReplaceList)
+        public ClashConfigYaml CleanUp(IEnumerable<string> RemoveList, IEnumerable<KeyValuePair<string, string>> ReplaceList, bool IgnoreCase = true)
         {
             var result = this;
             try
             {
                 if (RemoveList is IEnumerable<string>)
                 {
+                    #region Remove in proxies
                     var proxy_list = Proxies.ToList();
                     foreach (var proxy in Proxies.ToList())
                     {
                         foreach (var remove in RemoveList)
                         {
-                            if (Regex.IsMatch(proxy.Name, remove, RegexOptions.IgnoreCase))
+                            if (remove.EndsWith("/i", StringComparison.CurrentCultureIgnoreCase))
                             {
-                                proxy_list.Remove(proxy);
+                                if (Regex.IsMatch(proxy.Name, remove.Substring(0, remove.Length - 2), RegexOptions.IgnoreCase))
+                                {
+                                    proxy_list.Remove(proxy);
+                                }
+                            }
+                            else if (IgnoreCase)
+                            {
+                                if (Regex.IsMatch(proxy.Name, remove, RegexOptions.IgnoreCase))
+                                {
+                                    proxy_list.Remove(proxy);
+                                }
+                            }
+                            else
+                            {
+                                if (Regex.IsMatch(proxy.Name, remove, RegexOptions.None))
+                                {
+                                    proxy_list.Remove(proxy);
+                                }
                             }
                         }
                     }
                     Proxies = proxy_list.ToArray();
+                    #endregion
 
-                    var group_list = ProxyGroups.ToList();
-                    foreach (var group in ProxyGroups.ToList())
+                    #region Remove in proxy groups
+                    foreach (var group in ProxyGroups)
                     {
                         if (group.Proxies is IEnumerable<string>)
                         {
@@ -302,53 +323,134 @@ namespace Clash
                             {
                                 foreach (var remove in RemoveList)
                                 {
-                                    if (Regex.IsMatch(proxy, remove, RegexOptions.IgnoreCase))
+                                    if (remove.EndsWith("/i", StringComparison.CurrentCultureIgnoreCase))
                                     {
-                                        proxies.Remove(proxy);
+                                        if (Regex.IsMatch(proxy, remove.Substring(0, remove.Length - 2), RegexOptions.IgnoreCase))
+                                        {
+                                            proxies.Remove(proxy);
+                                        }
+                                    }
+                                    else if (IgnoreCase)
+                                    {
+                                        if (Regex.IsMatch(proxy, remove, RegexOptions.IgnoreCase))
+                                        {
+                                            proxies.Remove(proxy);
+                                        }
+                                    }
+                                    else
+                                    {
+                                        if (Regex.IsMatch(proxy, remove, RegexOptions.None))
+                                        {
+                                            proxies.Remove(proxy);
+                                        }
                                     }
                                 }
                             }
                             group.Proxies = proxies.ToArray();
                         }
                     }
-                    ProxyGroups = group_list.ToArray();
+                    #endregion
                 }
 
                 if (ReplaceList is IDictionary<string, string>)
                 {
+                    #region Replace text in proxy name
                     var proxy_list = Proxies.ToList();
                     foreach (var proxy in Proxies.ToList())
                     {
                         foreach (var replace in ReplaceList)
                         {
-                            if (Regex.IsMatch(proxy.Name, replace.Key, RegexOptions.IgnoreCase))
+                            if (replace.Key.EndsWith("/i", StringComparison.CurrentCultureIgnoreCase))
                             {
-                                proxy.Name = Regex.Replace(proxy.Name, replace.Key, replace.Value, RegexOptions.IgnoreCase);
-                            }
-                        }
-                    }
-                    Proxies = proxy_list.ToArray();
-
-                    var group_list = ProxyGroups.ToList();
-                    foreach (var group in ProxyGroups.ToList())
-                    {
-                        if (group.Proxies is IEnumerable<string>)
-                        {
-                            var proxies = group.Proxies.ToList();
-                            for (int i = 0; i < proxies.Count; i++)
-                            {
-                                var proxy = group.Proxies[i];
-                                foreach (var replace in ReplaceList)
+                                if (Regex.IsMatch(proxy.Name, replace.Key.Substring(0, replace.Key.Length - 2), RegexOptions.IgnoreCase))
                                 {
-                                    if (Regex.IsMatch(proxy, replace.Key, RegexOptions.IgnoreCase))
-                                    {
-                                        group.Proxies[i] = Regex.Replace(proxy, replace.Key, replace.Value, RegexOptions.IgnoreCase);
-                                    }
+                                    proxy.Name = Regex.Replace(proxy.Name, replace.Key.Substring(0, replace.Key.Length - 2), replace.Value, RegexOptions.IgnoreCase);
+                                }
+                            }
+                            else if (IgnoreCase)
+                            {
+                                if (Regex.IsMatch(proxy.Name, replace.Value, RegexOptions.IgnoreCase))
+                                {
+                                    proxy.Name = Regex.Replace(proxy.Name, replace.Key, replace.Value, RegexOptions.IgnoreCase);
+                                }
+                            }
+                            else
+                            {
+                                if (Regex.IsMatch(proxy.Name, replace.Key, RegexOptions.None))
+                                {
+                                    proxy.Name = Regex.Replace(proxy.Name, replace.Key, replace.Value, RegexOptions.None);
                                 }
                             }
                         }
                     }
-                    ProxyGroups = group_list.ToArray();
+                    Proxies = proxy_list.ToArray();
+                    #endregion
+
+                    #region Replace in group name and group proxies name
+                    foreach (var group in ProxyGroups.ToList())
+                    {
+                        foreach (var replace in ReplaceList)
+                        {
+                            #region Replace in proxy group name
+                            if (replace.Key.EndsWith("/i", StringComparison.CurrentCultureIgnoreCase))
+                            {
+                                if (Regex.IsMatch(group.Name, replace.Key.Substring(0, replace.Key.Length - 2), RegexOptions.IgnoreCase))
+                                {
+                                    group.Name = Regex.Replace(group.Name, replace.Key.Substring(0, replace.Value.Length - 2), replace.Value, RegexOptions.IgnoreCase);
+                                }
+                            }
+                            else if (IgnoreCase)
+                            {
+                                if (Regex.IsMatch(group.Name, replace.Key, RegexOptions.IgnoreCase))
+                                {
+                                    group.Name = Regex.Replace(group.Name, replace.Key, replace.Value, RegexOptions.IgnoreCase);
+                                }
+                            }
+                            else
+                            {
+                                if (Regex.IsMatch(group.Name, replace.Key, RegexOptions.None))
+                                {
+                                    group.Name = Regex.Replace(group.Name, replace.Key, replace.Value, RegexOptions.None);
+                                }
+                            }
+                            #endregion
+
+                            #region Replace in proxy group proxies name
+                            if (group.Proxies is IEnumerable<string>)
+                            {
+                                var proxies = group.Proxies.ToList();
+                                for (int i = 0; i < proxies.Count; i++)
+                                {
+                                    var proxy = proxies[i];
+
+                                    if (replace.Key.EndsWith("/i", StringComparison.CurrentCultureIgnoreCase))
+                                    {
+                                        if (Regex.IsMatch(proxy, replace.Key.Substring(0, replace.Key.Length - 2), RegexOptions.IgnoreCase))
+                                        {
+                                            proxies[i] = Regex.Replace(proxy, replace.Key.Substring(0, replace.Key.Length - 2), replace.Value, RegexOptions.IgnoreCase);
+                                        }
+                                    }
+                                    else if (IgnoreCase)
+                                    {
+                                        if (Regex.IsMatch(proxy, replace.Value, RegexOptions.IgnoreCase))
+                                        {
+                                            proxies[i] = Regex.Replace(proxy, replace.Key, replace.Value, RegexOptions.IgnoreCase);
+                                        }
+                                    }
+                                    else
+                                    {
+                                        if (Regex.IsMatch(proxy, replace.Key, RegexOptions.None))
+                                        {
+                                            proxies[i] = Regex.Replace(proxy, replace.Key, replace.Value, RegexOptions.None);
+                                        }
+                                    }
+                                }
+                                group.Proxies = proxies.ToArray();
+                            }
+                            #endregion
+                        }
+                    }
+                    #endregion
                 }
             }
             catch { }
@@ -638,29 +740,29 @@ namespace Clash
         public string[] Domain { get; set; }
     }
 
+    /// <summary>
+    ///   Shadowsocks
+    ///   The supported ciphers (encryption methods):
+    ///     aes-128-gcm aes-192-gcm aes-256-gcm
+    ///     aes-128-cfb aes-192-cfb aes-256-cfb
+    ///     aes-128-ctr aes-192-ctr aes-256-ctr
+    ///     rc4-md5 chacha20-ietf xchacha20
+    ///     chacha20-ietf-poly1305 xchacha20-ietf-poly1305
+    ///     
+    ///   vmess
+    ///   cipher support auto/aes-128-gcm/chacha20-poly1305/none
+    ///   
+    ///   ShadowsocksR
+    ///   The supported ciphers (encryption methods): all stream ciphers in ss
+    ///   The supported obfses:
+    ///     plain http_simple http_post
+    ///       random_head tls1.2_ticket_auth tls1.2_ticket_fastauth
+    ///   The supported supported protocols:
+    ///     origin auth_sha1_v4 auth_aes128_md5
+    ///     auth_aes128_sha1 auth_chain_a auth_chain_b 
+    /// </summary>
     public partial class Proxy
     {
-        /// <summary>
-        ///   Shadowsocks
-        ///   The supported ciphers (encryption methods):
-        ///     aes-128-gcm aes-192-gcm aes-256-gcm
-        ///     aes-128-cfb aes-192-cfb aes-256-cfb
-        ///     aes-128-ctr aes-192-ctr aes-256-ctr
-        ///     rc4-md5 chacha20-ietf xchacha20
-        ///     chacha20-ietf-poly1305 xchacha20-ietf-poly1305
-        ///     
-        ///   vmess
-        ///   cipher support auto/aes-128-gcm/chacha20-poly1305/none
-        ///   
-        ///   ShadowsocksR
-        ///   The supported ciphers (encryption methods): all stream ciphers in ss
-        ///   The supported obfses:
-        ///     plain http_simple http_post
-        ///       random_head tls1.2_ticket_auth tls1.2_ticket_fastauth
-        ///   The supported supported protocols:
-        ///     origin auth_sha1_v4 auth_aes128_md5
-        ///     auth_aes128_sha1 auth_chain_a auth_chain_b 
-        /// </summary>
         [YamlMember(Alias = "name")]
         public string Name { get; set; }
 

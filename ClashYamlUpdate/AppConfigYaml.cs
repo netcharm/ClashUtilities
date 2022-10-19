@@ -127,7 +127,7 @@ namespace ClashYamlUpdate
         {
             var result = text;
             if(!string.IsNullOrEmpty(text))
-            if (Regex.IsMatch(text, @"^/(.*?)/$", RegexOptions.IgnoreCase))
+            if (Regex.IsMatch(text, @"^/(.*?)/i?$", RegexOptions.IgnoreCase))
             {
                 result = text.Trim('/');
             }
