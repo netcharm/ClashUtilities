@@ -21,24 +21,25 @@ namespace ClashYamlUpdate
             var show_help = false;
 
             var config_yaml = Path.Combine(AppPath, $"{Path.GetFileNameWithoutExtension(AppName)}.config.yaml");
+            var appconfig = AppConfigYaml.FromFile(config_yaml);
 
-            var template_yaml = Path.Combine(WorkPath, "default.yaml");
-            var source_yaml = Path.Combine(WorkPath, "source.yaml");
-            var target_yaml = Path.Combine(WorkPath, "target.yaml");
+            var template_yaml = string.IsNullOrEmpty(appconfig.Template_Yaml) ? Path.Combine(WorkPath, "default.yaml") : Path.GetFullPath(Environment.ExpandEnvironmentVariables(appconfig.Template_Yaml));
+            var source_yaml = string.IsNullOrEmpty(appconfig.Source_Yaml) ? Path.Combine(WorkPath, "source.yaml") : Path.GetFullPath(Environment.ExpandEnvironmentVariables(appconfig.Source_Yaml));
+            var target_yaml = string.IsNullOrEmpty(appconfig.Target_Yaml) ? Path.Combine(WorkPath, "target.yaml") : Path.GetFullPath(Environment.ExpandEnvironmentVariables(appconfig.Target_Yaml));
+            var copyto_path = string.IsNullOrEmpty(appconfig.CopyTo_Path) ? string.Empty : Path.GetFullPath(Environment.ExpandEnvironmentVariables(appconfig.CopyTo_Path));
 
             var opts = new OptionSet()
             {
-                { "i|input=", "Source Clash Config YAML", v => { if (!Console.IsInputRedirected) source_yaml = Path.GetFullPath(v); } },
-                { "o|output=", "Target Clash Config YAML", v => { target_yaml = Path.GetFullPath(v); } },
-                { "t|template=", "Template Clash Config YAML", v => { template_yaml = Path.GetFullPath(v); } },
+                { "i|input=", "Source Clash Config YAML {FILE}", v => { if (!Console.IsInputRedirected && v != null) source_yaml = Path.GetFullPath(Environment.ExpandEnvironmentVariables(v)); } },
+                { "o|output=", "Target Clash Config YAML {FILE}", v => { if (v != null) target_yaml = Path.GetFullPath(Environment.ExpandEnvironmentVariables(v)); } },
+                { "t|template=", "Template Clash Config YAML {FILE}", v => { if (v != null) template_yaml = Path.GetFullPath(Environment.ExpandEnvironmentVariables(v)); } },
+                { "c|copyto=", "Copy Target Clash Config YAML to {PATH}", v => { if (v != null) copyto_path = Path.GetFullPath(Environment.ExpandEnvironmentVariables(v)); } },
 
                 { "h|?|help", "Help", v => { show_help = v != null; } },
             };
-            var extras = opts.Parse(args);
+            var extras = args is string[] ? opts.Parse(args) : new List<string>();
 
-            var appconfig = AppConfigYaml.FromFile(config_yaml);
-
-            if (!Console.IsInputRedirected && (show_help || args.Length == 0))
+            if (!Console.IsInputRedirected && (show_help || (args is string[] && args.Length == 0)))
             {
                 ShowHelp(opts);
                 return;
@@ -57,9 +58,11 @@ namespace ClashYamlUpdate
             if (File.Exists(template_yaml) && File.Exists(source_yaml))
             {
                 Console.WriteLine("=".PadRight(72, '='));
+                Console.WriteLine($"{"Template File".PadRight(13)} : {template_yaml}");
                 Console.WriteLine($"{"Source File".PadRight(13)} : {source_yaml}");
                 Console.WriteLine($"{"Target File".PadRight(13)} : {target_yaml}");
-                Console.WriteLine($"{"Template File".PadRight(13)} : {template_yaml}");
+                if (!string.IsNullOrEmpty(copyto_path) && Directory.Exists(copyto_path))
+                    Console.WriteLine($"{"CopyTo Path".PadRight(13)} : {copyto_path}");
 
                 var clash_template = Clash.ClashConfigYaml.FromFile(template_yaml);
                 var clash_source = Clash.ClashConfigYaml.FromFile(source_yaml);
@@ -75,6 +78,12 @@ namespace ClashYamlUpdate
                         clash_target = clash_target.CleanUp(appconfig.RemoveList, appconfig.ReplaceList);
                     }
                     clash_target.ToFile(target_yaml);
+
+                    if (!string.IsNullOrEmpty(copyto_path) && Directory.Exists(copyto_path))
+                    {
+                        Console.WriteLine($"Copy \"{target_yaml}\" To \"{copyto_path}\" ...");
+                        File.Copy(target_yaml, Path.Combine(copyto_path, Path.GetFileName(target_yaml)), true);
+                    }
                 }
                 Console.WriteLine("=".PadRight(72, '='));
             }

@@ -164,6 +164,21 @@ namespace ClashYamlUpdate
             return (this);
         }
 
+        [YamlMember(Alias = "template", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
+        public string Template_Yaml { get; set; } = string.Empty;
+
+        [YamlMember(Alias = "source", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
+        public string Source_Yaml { get; set; } = string.Empty;
+
+        [YamlMember(Alias = "target", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
+        public string Target_Yaml { get; set; } = string.Empty;
+
+        [YamlMember(Alias = "target_path", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
+        public string Target_Path { get; set; } = string.Empty;
+
+        [YamlMember(Alias = "copyto", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
+        public string CopyTo_Path { get; set; } = string.Empty;
+
         [YamlMember(Alias = "replace", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
         public Dictionary<string, string> ReplaceList { get; set; } = new Dictionary<string, string>();
 

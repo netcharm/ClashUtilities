@@ -253,7 +253,7 @@ namespace Clash
             var rules = dst.Rules.Select(r => string.Join(", ", r.Split(',').Select(a => a.Trim()))).ToList();
             var groups = dst.ProxyGroups.Select(g => g.Name).ToList();
             var insert = new List<string>();
-            foreach (var rule in this.Rules.Select(r => string.Join(", ", r.Split(',').Select(a => a.Trim()))))
+            foreach (var rule in Rules.Select(r => string.Join(", ", r.Split(',').Select(a => a.Trim()))))
             {
                 try
                 {
@@ -262,12 +262,10 @@ namespace Clash
                     
                     var group = rule.Split(',').Skip(2).First().Trim();
                     if (groups.Contains(group)) insert.Add(rule); 
-                    else if (group.Equals("DIRECT", StringComparison.CurrentCultureIgnoreCase)) insert.Add(rule);
-                    else if (group.Equals("REJECT", StringComparison.CurrentCultureIgnoreCase)) insert.Add(rule);
                 }
                 catch (Exception ex) { Console.WriteLine(ex.Message); }
             }
-            rules.InsertRange(0, insert);
+            rules.InsertRange(0, insert.Select(r => new Rule(r).ToString()));
             dst.Rules = rules.ToArray();
             #endregion
 
@@ -853,10 +851,51 @@ namespace Clash
 
     public partial class Rule
     {
-        public string type { get; set; }
-        public string address { get; set; }
-        public string group { get; set; }
-        public string option { get; set; }
+        public string Type { get; set; } = string.Empty;
+        public string Address { get; set; } = string.Empty;
+        public string Group { get; set; } = string.Empty;
+        public string Option { get; set; } = string.Empty;
+
+        private string[] ReservedKeyword = new string[] { "DIRECT", "REJECT", "PROXIE" };
+
+        public Rule(string text)
+        {
+            if (!string.IsNullOrEmpty(text))
+            {
+                try
+                {
+                    var r = text.Split(',').Select(t => t.Trim());
+                    var count = r.Count();
+                    if (count == 3 || count == 4)
+                    {
+                        Type = r.First().ToUpper();
+                        Address = r.Skip(1).First();
+                        Group = r.Skip(2).First();
+                        if (count == 4) Option = r.Last();
+                        if (ReservedKeyword.Contains(Group, StringComparer.OrdinalIgnoreCase)) Group = Group.ToUpper();
+                    }
+                }
+                catch { }
+            }
+        }
+
+        public bool Equals(Rule rule)
+        {
+            return (rule.Type.Equals(rule.Type, StringComparison.CurrentCultureIgnoreCase) &&
+                rule.Address.Equals(rule.Address, StringComparison.CurrentCultureIgnoreCase) &&
+                rule.Group.Equals(rule.Group, StringComparison.CurrentCultureIgnoreCase) &&
+                rule.Option.Equals(rule.Option, StringComparison.CurrentCultureIgnoreCase));
+        }
+
+        public bool Equals(string rule)
+        {
+            return(Equals(new Rule(rule)));
+        }
+
+        public override string ToString()
+        {
+            return (string.Join(", ", new string[] { Type.ToUpper(), Address, Group, Option}.Where(s => !string.IsNullOrEmpty(s))));
+        }
     }
 
     public partial class ObfsOpts
@@ -986,6 +1025,9 @@ namespace Clash
 
         [YamlMember(Alias = "health-check", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
         public HealthCheck HealthCheck { get; set; }
+        
+        [YamlMember(Alias = "payload", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
+        public string[] Payload { get; set; }
     }
 
     public partial class HealthCheck
