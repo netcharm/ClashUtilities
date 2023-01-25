@@ -148,15 +148,15 @@ namespace Clash
             var result = dst;
 
             #region Merge Proxy Providers
-            if (this.ProxyProviders != null)
+            if (ProxyProviders != null)
             {
                 if (result.ProxyProviders == null)
                 {
-                    result.ProxyProviders = this.ProxyProviders;
+                    result.ProxyProviders = ProxyProviders;
                 }
                 else
                 {
-                    foreach (var provider in this.ProxyProviders)
+                    foreach (var provider in ProxyProviders)
                     {
                         try
                         {
@@ -170,15 +170,15 @@ namespace Clash
             #endregion
 
             #region Merge Rule Providers
-            if (this.RuleProviders != null)
+            if (RuleProviders != null)
             {
                 if (result.RuleProviders == null)
                 {
-                    result.RuleProviders = this.RuleProviders;
+                    result.RuleProviders = RuleProviders;
                 }
                 else
                 {
-                    foreach (var provider in this.RuleProviders)
+                    foreach (var provider in RuleProviders)
                     {
                         try
                         {
@@ -192,80 +192,90 @@ namespace Clash
             #endregion
 
             #region Merge Proxies
-            var proxy_list = dst.Proxies.ToList();
+            var proxy_list = dst.Proxies is Proxy[] ? dst.Proxies.ToList() : new List<Proxy>();
             var proxy_names = proxy_list.Select(p => p.Name);
             var proxy_new = new List<string>();
-            foreach (var proxy in this.Proxies)
+            if (Proxies is Proxy[])
             {
-                try
+                foreach (var proxy in Proxies.Where(p => p is Proxy))
                 {
-                    if (proxy_names.Contains(proxy.Name)) continue;
-                    //proxy_list.Append()
-                    proxy_list.Add(proxy);
-                    proxy_new.Add(proxy.Name);
+                    try
+                    {
+                        if (proxy_names.Contains(proxy.Name)) continue;
+                        //proxy_list.Append()
+                        proxy_list.Add(proxy);
+                        proxy_new.Add(proxy.Name);
+                    }
+                    catch (Exception ex) { Console.WriteLine(ex.Message); }
                 }
-                catch (Exception ex) { Console.WriteLine(ex.Message); }
             }
             result.Proxies = proxy_list.ToArray();
             #endregion
 
             #region Merge Proxy Groups
-            var group_list = dst.ProxyGroups.ToList();
+            var group_list = dst.ProxyGroups is ProxyGroup[] ? dst.ProxyGroups.ToList() : new List<ProxyGroup>();
             var group_names = group_list.Select(g => g.Name);
             var group_new = new List<ProxyGroup>();
-            foreach (var group in ProxyGroups)
+            if (ProxyGroups is ProxyGroup[])
             {
-                try
+                foreach (var group in ProxyGroups.Where(p => p != null))
                 {
-                    if (group_names.Contains(group.Name)) continue;
-                    //proxy_list.Append()
-                    group_list.Insert(0, group);
-                    group_new.Add(group);
-                }
-                catch (Exception ex) { Console.WriteLine(ex.Message); }
-            }
-            var group_new_names = group_new.Select(g => g.Name);
-            foreach (var group in group_list)
-            {
-                try
-                {
-                    if (!group.Type.Equals("select", StringComparison.CurrentCultureIgnoreCase)) continue;
-                    if (group_new_names.Contains(group.Name)) continue;
-                    var group_proxy = group.Proxies == null ? new List<string>() : group.Proxies.ToList();
-                    foreach (var gn in group_new)
+                    try
                     {
-                        try
-                        {
-                            if (group.Proxies != null && group.Proxies.Contains(gn.Name)) continue;
-                            if (gn.Proxies != null && gn.Proxies.Contains(group.Name)) continue;
-                            group_proxy.Insert(0, gn.Name);
-                        }
-                        catch (Exception ex) { Console.WriteLine(ex.Message); }
+                        if (group_names.Contains(group.Name)) continue;
+                        //proxy_list.Append()
+                        group_list.Insert(0, group);
+                        group_new.Add(group);
                     }
-                    group.Proxies = group_proxy.Count > 0 ? group_proxy.ToArray() : null;
+                    catch (Exception ex) { Console.WriteLine(ex.Message); }
                 }
-                catch (Exception ex) { Console.WriteLine(ex.Message); }
+
+                var group_new_names = group_new.Select(g => g.Name);
+                foreach (var group in group_list)
+                {
+                    try
+                    {
+                        if (!group.Type.Equals("select", StringComparison.CurrentCultureIgnoreCase)) continue;
+                        if (group_new_names.Contains(group.Name)) continue;
+                        var group_proxy = group.Proxies == null ? new List<string>() : group.Proxies.ToList();
+                        foreach (var gn in group_new)
+                        {
+                            try
+                            {
+                                if (group.Proxies != null && group.Proxies.Contains(gn.Name)) continue;
+                                if (gn.Proxies != null && gn.Proxies.Contains(group.Name)) continue;
+                                group_proxy.Insert(0, gn.Name);
+                            }
+                            catch (Exception ex) { Console.WriteLine(ex.Message); }
+                        }
+                        group.Proxies = group_proxy.Count > 0 ? group_proxy.ToArray() : null;
+                    }
+                    catch (Exception ex) { Console.WriteLine(ex.Message); }
+                }
             }
             result.ProxyGroups = group_list.ToArray();
             #endregion
 
             #region Merge Rules
-            var rules = dst.Rules.Select(r => string.Join(", ", r.Split(',').Select(a => a.Trim()))).ToList();
+            var rules = dst.Rules is string[] ? dst.Rules.Select(r => string.Join(", ", r.Split(',').Select(a => a.Trim()))).ToList() : new List<string>();
             var groups = dst.ProxyGroups.Select(g => g.Name).ToList();
             var insert = new List<string>();
-            foreach (var rule in Rules.Select(r => string.Join(", ", r.Split(',').Select(a => a.Trim()))))
+            if (Rules is string[])
             {
-                try
+                foreach (var rule in Rules.Where(r => !string.IsNullOrEmpty(r)).Select(r => string.Join(", ", r.Split(',').Select(a => a.Trim()))))
                 {
-                    if (string.IsNullOrEmpty(rule)) continue;
-                    if (rules.Contains(rule)) continue;
-                    
-                    var group = rule.Split(',').Skip(2).First().Trim();
-                    if (groups.Contains(group)) insert.Add(rule); 
+                    try
+                    {
+                        if (string.IsNullOrEmpty(rule)) continue;
+                        if (rules.Contains(rule)) continue;
+
+                        var group = rule.Split(',').Skip(2).First().Trim();
+                        if (groups.Contains(group)) insert.Add(rule);
+                    }
+                    catch (Exception ex) { Console.WriteLine(ex.Message); }
                 }
-                catch (Exception ex) { Console.WriteLine(ex.Message); }
+                rules.InsertRange(0, insert.Select(r => new Rule(r).ToString()));
             }
-            rules.InsertRange(0, insert.Select(r => new Rule(r).ToString()));
             dst.Rules = rules.ToArray();
             #endregion
 

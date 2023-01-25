@@ -23,17 +23,17 @@ namespace ClashYamlUpdate
             var config_yaml = Path.Combine(AppPath, $"{Path.GetFileNameWithoutExtension(AppName)}.config.yaml");
             var appconfig = AppConfigYaml.FromFile(config_yaml);
 
-            var template_yaml = string.IsNullOrEmpty(appconfig.Template_Yaml) ? Path.Combine(WorkPath, "default.yaml") : Path.GetFullPath(Environment.ExpandEnvironmentVariables(appconfig.Template_Yaml));
-            var source_yaml = string.IsNullOrEmpty(appconfig.Source_Yaml) ? Path.Combine(WorkPath, "source.yaml") : Path.GetFullPath(Environment.ExpandEnvironmentVariables(appconfig.Source_Yaml));
-            var target_yaml = string.IsNullOrEmpty(appconfig.Target_Yaml) ? Path.Combine(WorkPath, "target.yaml") : Path.GetFullPath(Environment.ExpandEnvironmentVariables(appconfig.Target_Yaml));
-            var copyto_path = string.IsNullOrEmpty(appconfig.CopyTo_Path) ? string.Empty : Path.GetFullPath(Environment.ExpandEnvironmentVariables(appconfig.CopyTo_Path));
+            var template_yaml = string.IsNullOrEmpty(appconfig.Template_Yaml) ? Path.Combine(WorkPath, "default.yaml") : FullPath(appconfig.Template_Yaml);
+            var source_yaml = string.IsNullOrEmpty(appconfig.Source_Yaml) ? Path.Combine(WorkPath, "source.yaml") : FullPath(appconfig.Source_Yaml);
+            var target_yaml = string.IsNullOrEmpty(appconfig.Target_Yaml) ? Path.Combine(WorkPath, "target.yaml") : FullPath(appconfig.Target_Yaml);
+            var copyto_path = string.IsNullOrEmpty(appconfig.CopyTo_Path) ? string.Empty : FullPath(appconfig.CopyTo_Path);
 
             var opts = new OptionSet()
             {
-                { "i|input=", "Source Clash Config YAML {FILE}", v => { if (!Console.IsInputRedirected && v != null) source_yaml = Path.GetFullPath(Environment.ExpandEnvironmentVariables(v)); } },
-                { "o|output=", "Target Clash Config YAML {FILE}", v => { if (v != null) target_yaml = Path.GetFullPath(Environment.ExpandEnvironmentVariables(v)); } },
-                { "t|template=", "Template Clash Config YAML {FILE}", v => { if (v != null) template_yaml = Path.GetFullPath(Environment.ExpandEnvironmentVariables(v)); } },
-                { "c|copyto=", "Copy Target Clash Config YAML to {PATH}", v => { if (v != null) copyto_path = Path.GetFullPath(Environment.ExpandEnvironmentVariables(v)); } },
+                { "i|input=", "Source Clash Config YAML {FILE}", v => { if (!Console.IsInputRedirected && v != null) source_yaml = FullPath(v); } },
+                { "o|output=", "Target Clash Config YAML {FILE}", v => { if (v != null) target_yaml = FullPath(v); } },
+                { "t|template=", "Template Clash Config YAML {FILE}", v => { if (v != null) template_yaml = FullPath(v); } },
+                { "c|copyto=", "Copy Target Clash Config YAML to {PATH}", v => { if (v != null) copyto_path = FullPath(v); } },
 
                 { "h|?|help", "Help", v => { show_help = v != null; } },
             };
@@ -54,6 +54,11 @@ namespace ClashYamlUpdate
                 //    Console.WriteLine($"FileName = {f}");
                 //}
             }
+
+            if (!string.IsNullOrEmpty(template_yaml)) template_yaml = FullPath(template_yaml);
+            if (!string.IsNullOrEmpty(source_yaml)) source_yaml = FullPath(source_yaml);
+            if (!string.IsNullOrEmpty(target_yaml)) target_yaml = FullPath(target_yaml);
+            if (!string.IsNullOrEmpty(copyto_path)) copyto_path = FullPath(copyto_path);
 
             if (File.Exists(template_yaml) && File.Exists(source_yaml))
             {
@@ -94,6 +99,13 @@ namespace ClashYamlUpdate
             Console.WriteLine($"Usage: {AppName} [OPTIONS]+");
             Console.WriteLine("Options:");
             opts.WriteOptionDescriptions(Console.Out);
+        }
+
+        static string FullPath(string path)
+        {
+            var result = path;
+            if (!string.IsNullOrEmpty(result)) result = Path.GetFullPath(Environment.ExpandEnvironmentVariables(result));
+            return (result);
         }
 
         static async Task<IEnumerable<string>> GetStdIn()
