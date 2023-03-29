@@ -936,6 +936,9 @@ namespace Clash
     {
         [YamlMember(Alias = "Host", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
         public string Host { get; set; }
+
+        [YamlMember(Alias = "host", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
+        public string host { get; set; }
     }
 
     public partial class H2Opts
@@ -1011,6 +1014,9 @@ namespace Clash
 
         [YamlMember(Alias = "use", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
         public string[] Use { get; set; }
+
+        [YamlMember(Alias = "tolerance", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
+        public int Tolerance { get; set; }
 
         [YamlMember(Alias = "proxies", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
         public string[] Proxies { get; set; }
