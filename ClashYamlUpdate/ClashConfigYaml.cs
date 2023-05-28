@@ -238,6 +238,7 @@ namespace Clash
                         if (!group.Type.Equals("select", StringComparison.CurrentCultureIgnoreCase)) continue;
                         if (group_new_names.Contains(group.Name)) continue;
                         var group_proxy = group.Proxies == null ? new List<string>() : group.Proxies.ToList();
+                        if (Proxies is Proxy[] && Proxies.Count() > 0) group_proxy.InsertRange(0, Proxies.Select(p => p.Name));
                         foreach (var gn in group_new)
                         {
                             try
