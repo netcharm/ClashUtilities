@@ -554,6 +554,12 @@ namespace Clash
         public string ExternalController { get; set; }
 
         /// <summary>
+        /// Clash For Android properties
+        /// </summary>
+        [YamlMember(Alias = "clash-for-android", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
+        public ClashForAndroid ClashForAndroid { get; set; }
+
+        /// <summary>
         /// A relative path to the configuration directory or an absolute path to a
         /// directory in which you put some static web resource. Clash core will then
         /// serve it at `${API}/ui`.
@@ -631,6 +637,12 @@ namespace Clash
         /// </summary>
         [YamlMember(Alias = "store-fake-ip", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
         public bool StoreFakeIp { get; set; }
+    }
+
+    public partial class ClashForAndroid
+    {
+        [YamlMember(Alias = "append-system-dns", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
+        public bool AppendSystemDns { get; set; }
     }
 
     /// <summary>
