@@ -818,7 +818,7 @@ namespace Clash
         public string ClientFingerprint { get; set; }
 
         [YamlMember(Alias = "tfo", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
-        public string TFO { get; set; }
+        public bool? TFO { get; set; }
 
         [YamlMember(Alias = "udp", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
         public bool? UDP { get; set; }
