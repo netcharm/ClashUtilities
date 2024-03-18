@@ -106,7 +106,7 @@ namespace Clash
                 var contents = yaml.Serialize(this);
                 File.WriteAllText(file, contents, Encoding.UTF8);
             }
-            catch (Exception ex) { Console.Out.WriteLine(ex.Message); }
+            catch (Exception ex) { Console.Out.WriteLine($"[ToFile]{ex.Source}:{ex.Message}"); }
         }
 
         public void ToStream(Stream stream)
@@ -163,7 +163,7 @@ namespace Clash
                             if (result.ProxyProviders.ContainsKey(provider.Key)) continue;
                             result.ProxyProviders.Add(provider.Key, provider.Value);
                         }
-                        catch (Exception ex) { Console.WriteLine(ex.Message); }
+                        catch (Exception ex) { Console.WriteLine($"[MergeProxyProvider]{ex.Source}:{ex.Message}"); }
                     }
                 }
             }
@@ -185,7 +185,7 @@ namespace Clash
                             if (result.RuleProviders.ContainsKey(provider.Key)) continue;
                             result.RuleProviders.Add(provider.Key, provider.Value);
                         }
-                        catch (Exception ex) { Console.WriteLine(ex.Message); }
+                        catch (Exception ex) { Console.WriteLine($"[MergeRuleProvider]{ex.Source}:{ex.Message}"); }
                     }
                 }
             }
@@ -206,7 +206,7 @@ namespace Clash
                         proxy_list.Add(proxy);
                         proxy_new.Add(proxy.Name);
                     }
-                    catch (Exception ex) { Console.WriteLine(ex.Message); }
+                    catch (Exception ex) { Console.WriteLine($"[MergeProxy]{ex.Source}:{ex.Message}"); }
                 }
             }
             result.Proxies = proxy_list.ToArray();
@@ -227,7 +227,7 @@ namespace Clash
                         group_list.Insert(0, group);
                         group_new.Add(group);
                     }
-                    catch (Exception ex) { Console.WriteLine(ex.Message); }
+                    catch (Exception ex) { Console.WriteLine($"[MergeProxyGroup]{ex.Source}:{ex.Message}"); }
                 }
 
                 var group_new_names = group_new.Select(g => g.Name);
@@ -247,7 +247,7 @@ namespace Clash
                                 if (gn.Proxies != null && gn.Proxies.Contains(group.Name)) continue;
                                 group_proxy.Insert(0, gn.Name);
                             }
-                            catch (Exception ex) { Console.WriteLine(ex.Message); }
+                            catch (Exception ex) { Console.WriteLine($"[MergeProxyGroup]{ex.Source}:{ex.Message}"); }
                         }
                         group.Proxies = group_proxy.Count > 0 ? group_proxy.ToArray() : null;
                     }
@@ -273,7 +273,7 @@ namespace Clash
                         var group = rule.Split(',').Skip(2).First().Trim();
                         if (groups.Contains(group)) insert.Add(rule);
                     }
-                    catch (Exception ex) { Console.WriteLine(ex.Message); }
+                    catch (Exception ex) { Console.WriteLine($"[MergeRule]{ex.Source}:{ex.Message}"); }
                 }
                 rules.InsertRange(0, insert.Select(r => new Rule(r).ToString()));
             }
@@ -654,6 +654,9 @@ namespace Clash
         [YamlMember(Alias = "enable", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
         public bool Enable { get; set; }
 
+        [YamlMember(Alias = "enabled", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
+        public bool Enabled { get; set; }
+
         [YamlMember(Alias = "listen", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
         public string Listen { get; set; }
 
@@ -699,7 +702,7 @@ namespace Clash
         /// involved. Clash answers the DNS question with the first result gathered.
         /// </summary>
         [YamlMember(Alias = "nameserver", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
-        public Uri[] NameServer { get; set; }
+        public string[] NameServer { get; set; }
 
         /// <summary>
         /// Lookup domains via specific nameservers
@@ -714,7 +717,7 @@ namespace Clash
         /// is not `CN`.
         /// </summary>
         [YamlMember(Alias = "fallback", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
-        public Uri[] Fallback { get; set; }
+        public string[] Fallback { get; set; }
 
         /// <summary>
         /// If IP addresses resolved with servers in `nameservers` are in the specified
@@ -810,6 +813,12 @@ namespace Clash
 
         [YamlMember(Alias = "password", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
         public string Password { get; set; }
+
+        [YamlMember(Alias = "client-fingerprint", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
+        public string ClientFingerprint { get; set; }
+
+        [YamlMember(Alias = "tfo", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
+        public string TFO { get; set; }
 
         [YamlMember(Alias = "udp", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
         public bool? UDP { get; set; }
