@@ -826,6 +826,9 @@ namespace Clash
         [YamlMember(Alias = "tls", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
         public bool? TLS { get; set; }
 
+        [YamlMember(Alias = "flow", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
+        public string Flow { get; set; }
+
         [YamlMember(Alias = "skip-cert-verify", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
         public bool? SkipCertVerify { get; set; }
 
