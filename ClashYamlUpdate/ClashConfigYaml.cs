@@ -832,6 +832,9 @@ namespace Clash
         [YamlMember(Alias = "skip-cert-verify", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
         public bool? SkipCertVerify { get; set; }
 
+        [YamlMember(Alias = "reality-opts", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
+        public bool? RealityOpts { get; set; }
+
         [YamlMember(Alias = "servername", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
         public string ServerName { get; set; }
 
@@ -985,6 +988,15 @@ namespace Clash
 
         [YamlMember(Alias = "headers", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
         public HttpOptsHeaders Headers { get; set; }
+    }
+
+    public partial class RealityOpts
+    {
+        [YamlMember(Alias = "public-key", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
+        public string PublicKey { get; set; }
+
+        [YamlMember(Alias = "short-id", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
+        public string ShortId { get; set; }
     }
 
     public partial class HttpOptsHeaders
