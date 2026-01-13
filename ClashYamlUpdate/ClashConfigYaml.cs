@@ -826,6 +826,9 @@ namespace Clash
         [YamlMember(Alias = "tls", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
         public bool? TLS { get; set; }
 
+        [YamlMember(Alias = "alpn", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
+        public List<string> Alpn { get; set; }
+
         [YamlMember(Alias = "flow", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
         public string Flow { get; set; }
 
@@ -833,7 +836,7 @@ namespace Clash
         public bool? SkipCertVerify { get; set; }
 
         [YamlMember(Alias = "reality-opts", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
-        public bool? RealityOpts { get; set; }
+        public RealityOpts RealityOpts { get; set; }
 
         [YamlMember(Alias = "servername", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
         public string ServerName { get; set; }
@@ -947,6 +950,9 @@ namespace Clash
 
     public partial class GrpcOpts
     {
+        [YamlMember(Alias = "grpc-mode", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
+        public string GrpcMode { get; set; }
+
         [YamlMember(Alias = "grpc-service-name", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
         public string GrpcServiceName { get; set; }
     }
