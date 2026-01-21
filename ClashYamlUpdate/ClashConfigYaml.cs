@@ -1009,6 +1009,9 @@ namespace Clash
     {
         [YamlMember(Alias = "Connection", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
         public string[] Connection { get; set; }
+
+        [YamlMember(Alias = "Host", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
+        public string Host { get; set; }
     }
 
     public partial class PluginOpts
