@@ -799,6 +799,9 @@ namespace Clash
         [YamlMember(Alias = "type")]
         public string Type { get; set; }
 
+        [YamlMember(Alias = "auth", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
+        public string Auth { get; set; }
+
         [YamlMember(Alias = "uuid", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
         public Guid? UUID { get; set; }
 
