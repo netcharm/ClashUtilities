@@ -891,6 +891,9 @@ namespace Clash
 
         [YamlMember(Alias = "version", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
         public long? Version { get; set; }
+
+        [YamlMember(Alias = "xhttp-opts", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
+        public XHttpOpts XHttpOpts { get; set; }
     }
 
     public partial class Rule
@@ -1108,6 +1111,15 @@ namespace Clash
 
         [YamlMember(Alias = "url", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
         public string Url { get; set; }
+    }
+
+    public partial class XHttpOpts
+    {
+        [YamlMember(Alias = "path", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
+        public string Path { get; set; }
+
+        [YamlMember(Alias = "host", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
+        public string Host { get; set; }
     }
 
 }
