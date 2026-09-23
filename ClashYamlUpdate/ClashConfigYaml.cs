@@ -90,6 +90,15 @@ namespace Clash
                 {
                     var yaml = new Deserializer();
                     if (!lines[0].StartsWith("#")) lines.Insert(0, $"# YAML Starting...{Environment.NewLine}");
+                    //var pat = "uuid: *?([0-9a-f]{8,8})-?([0-9a-f]{4,4})-?([0-9a-f]{4,4})-?([0-9a-f]{4,4})-?([0-9a-f]{12,12}) *?,";
+                    //for (var i = 0; i < lines.Count; i++)
+                    //{
+                    //    if (Regex.IsMatch(lines[i], pat, RegexOptions.IgnoreCase))
+                    //    {
+                    //        //uuid: ?[0-9a-f]{8,8}-[0-9a-f]{4,4}-[0-9a-f]{4,4}-[0-9a-f]{4,4}-[0-9a-f]{12,12}
+                    //        lines[i] = Regex.Replace(lines[i], pat, "uuid: $1-$2-$3-$4-$5,", RegexOptions.IgnoreCase);
+                    //    }
+                    //}
                     result = yaml.Deserialize<ClashConfigYaml>(string.Join(Environment.NewLine, lines));
                 }
             }
@@ -803,7 +812,7 @@ namespace Clash
         public string Auth { get; set; }
 
         [YamlMember(Alias = "uuid", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
-        public Guid? UUID { get; set; }
+        public string UUID { get; set; }
 
         [YamlMember(Alias = "alterId", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
         public long? AlterID { get; set; }

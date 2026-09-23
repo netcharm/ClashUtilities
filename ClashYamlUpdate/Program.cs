@@ -23,10 +23,10 @@ namespace ClashYamlUpdate
             var config_yaml = Path.Combine(AppPath, $"{Path.GetFileNameWithoutExtension(AppName)}.config.yaml");
             var appconfig = AppConfigYaml.FromFile(config_yaml);
 
-            var template_yaml = string.IsNullOrEmpty(appconfig.Template_Yaml) ? Path.Combine(WorkPath, "default.yaml") : FullPath(appconfig.Template_Yaml);
-            var source_yaml = string.IsNullOrEmpty(appconfig.Source_Yaml) ? Path.Combine(WorkPath, "source.yaml") : FullPath(appconfig.Source_Yaml);
-            var target_yaml = string.IsNullOrEmpty(appconfig.Target_Yaml) ? Path.Combine(WorkPath, "target.yaml") : FullPath(appconfig.Target_Yaml);
-            var copyto_path = string.IsNullOrEmpty(appconfig.CopyTo_Path) ? string.Empty : FullPath(appconfig.CopyTo_Path);
+            var template_yaml = string.IsNullOrEmpty(appconfig?.Template_Yaml) ? Path.Combine(WorkPath, "default.yaml") : FullPath(appconfig?.Template_Yaml);
+            var source_yaml = string.IsNullOrEmpty(appconfig?.Source_Yaml) ? Path.Combine(WorkPath, "source.yaml") : FullPath(appconfig?.Source_Yaml);
+            var target_yaml = string.IsNullOrEmpty(appconfig?.Target_Yaml) ? Path.Combine(WorkPath, "target.yaml") : FullPath(appconfig?.Target_Yaml);
+            var copyto_path = string.IsNullOrEmpty(appconfig?.CopyTo_Path) ? string.Empty : FullPath(appconfig?.CopyTo_Path);
 
             var opts = new OptionSet()
             {

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using YamlDotNet.Serialization;
 
@@ -89,6 +90,15 @@ namespace ClashYamlUpdate
                 {
                     var yaml = new Deserializer();
                     if (!lines[0].StartsWith("#")) lines.Insert(0, $"# YAML Starting...{Environment.NewLine}");
+                    //var pat = "uuid: +?([0-9a-f]{8,8})-?([0-9a-f]{4,4})-?([0-9a-f]{4,4})-?([0-9a-f]{4,4})-?([0-9a-f]{12,12}) +?,";
+                    //for (var i = 0; i < lines.Count; i++)
+                    //{
+                    //    if (Regex.IsMatch(lines[i], pat, RegexOptions.IgnoreCase))
+                    //    {
+                    //        //uuid: ?[0-9a-f]{8,8}-[0-9a-f]{4,4}-[0-9a-f]{4,4}-[0-9a-f]{4,4}-[0-9a-f]{12,12}
+                    //        lines[i] = Regex.Replace(lines[i], pat, "uuid: $1-$2-$3-$4-$5,", RegexOptions.IgnoreCase);
+                    //    }
+                    //}
                     result = yaml.Deserialize<T>(string.Join(Environment.NewLine, lines));
                 }
             }
